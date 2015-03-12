@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -31,6 +30,7 @@ import org.wordpress.android.ui.WPDrawerActivity;
 import org.wordpress.android.util.AppLog;
 import org.wordpress.android.util.NetworkUtils;
 import org.wordpress.android.util.ToastUtils;
+import org.wordpress.android.util.ptr.CustomSwipeRefreshLayout;
 import org.wordpress.android.util.ptr.SwipeToRefreshHelper;
 import org.wordpress.android.util.ptr.SwipeToRefreshHelper.RefreshListener;
 import org.xmlrpc.android.ApiHelper;
@@ -147,9 +147,14 @@ public class CommentsListFragment extends Fragment {
         getCommentAdapter().loadComments();
 
         Bundle extras = getActivity().getIntent().getExtras();
-        mHasAutoRefreshedComments = extras.getBoolean(CommentsActivity.KEY_AUTO_REFRESHED);
-        mEmptyViewMessageType = EmptyViewMessageType.getEnumFromString(extras.getString(
-                CommentsActivity.KEY_EMPTY_VIEW_MESSAGE));
+        if (extras != null) {
+            mHasAutoRefreshedComments = extras.getBoolean(CommentsActivity.KEY_AUTO_REFRESHED);
+            mEmptyViewMessageType = EmptyViewMessageType.getEnumFromString(extras.getString(
+                    CommentsActivity.KEY_EMPTY_VIEW_MESSAGE));
+        } else {
+            mHasAutoRefreshedComments = false;
+            mEmptyViewMessageType = EmptyViewMessageType.NO_CONTENT;
+        }
 
         if (!NetworkUtils.isNetworkAvailable(getActivity())) {
             updateEmptyView(EmptyViewMessageType.NETWORK_ERROR);
@@ -198,7 +203,7 @@ public class CommentsListFragment extends Fragment {
 
         // swipe to refresh setup
         mSwipeToRefreshHelper = new SwipeToRefreshHelper(getActivity(),
-                (SwipeRefreshLayout) view.findViewById(R.id.ptr_layout),
+                (CustomSwipeRefreshLayout) view.findViewById(R.id.ptr_layout),
                 new RefreshListener() {
                     @Override
                     public void onRefreshStarted() {

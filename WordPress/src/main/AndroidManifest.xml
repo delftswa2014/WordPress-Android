@@ -64,20 +64,20 @@
         <activity
             android:name=".ui.accounts.SignInActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:windowSoftInputMode="adjustPan"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/SignInTheme" />
         <activity android:name=".ui.accounts.NewAccountActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:theme="@style/SignInTheme"
             android:windowSoftInputMode="adjustPan"/>
         <activity
             android:name=".ui.accounts.NewBlogActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+            android:theme="@style/SignInTheme"/>
         <activity
             android:name=".ui.accounts.HelpActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+            android:theme="@style/SignInTheme"/>
 
         <!-- Preferences activities -->
         <activity
@@ -85,13 +85,18 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
         <activity
             android:name=".ui.prefs.BlogPreferencesActivity"
+            android:theme="@style/CalypsoTheme"
             android:windowSoftInputMode="stateHidden"/>
         <activity
-            android:name=".ui.prefs.LicensesActivity"/>
+            android:name=".ui.prefs.LicensesActivity"
+            android:theme="@style/CalypsoTheme"/>
         <activity
-            android:name=".ui.prefs.SettingsActivity"/>
+            android:name=".ui.prefs.SettingsActivity"
+            android:configChanges="locale|orientation"
+            android:theme="@style/CalypsoTheme"/>
         <activity
-            android:name=".ui.accounts.ManageBlogsActivity"/>
+            android:name=".ui.accounts.ManageBlogsActivity"
+            android:theme="@style/CalypsoTheme"/>
         <activity
             android:name=".networking.SSLCertsViewActivity"/>
 
@@ -104,7 +109,8 @@
             android:theme="@style/CalypsoTheme"
             android:windowSoftInputMode="stateHidden" />
         <activity
-            android:name=".ui.comments.EditCommentActivity" />
+            android:name=".ui.comments.EditCommentActivity"
+            android:theme="@style/CalypsoTheme"/>
 
         <!-- Posts activities -->
         <activity
@@ -120,7 +126,7 @@
             android:name=".ui.posts.EditPostActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:windowSoftInputMode="stateHidden|adjustResize"
-            android:theme="@style/WordPress.DropDownListView.Light">
+            android:theme="@style/CalypsoTheme">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.posts.PostsActivity" />
@@ -139,7 +145,8 @@
             android:name=".ui.posts.PagesActivity"
             android:theme="@style/WordPress.DrawerActivity" />
         <activity
-            android:name=".ui.posts.SelectCategoriesActivity" />
+            android:name=".ui.posts.SelectCategoriesActivity"
+            android:theme="@style/CalypsoTheme"/>
 
         <!-- Stats Activities -->
         <activity android:name=".ui.stats.StatsActivity"
@@ -154,6 +161,11 @@
         <activity android:name=".ui.WPWebViewActivity"/>
 
         <!-- Media Activities -->
+        <activity
+            android:name=".ui.media.MediaPickerActivity"
+            android:theme="@style/CalypsoTheme"
+            android:windowSoftInputMode="stateHidden" />
+
         <activity android:name=".ui.media.MediaBrowserActivity"
                   android:theme="@style/WordPress.DrawerActivity" >
         </activity>
@@ -201,6 +213,7 @@
             android:windowSoftInputMode="adjustResize|stateHidden" />
         <activity
             android:name=".ui.AppLogViewerActivity"
+            android:theme="@style/CalypsoTheme"
             android:label="@string/reader_title_applog" />
         <activity
             android:name=".ui.reader.ReaderUserListActivity"
@@ -233,10 +246,6 @@
         </activity>
 
         <activity
-            android:name=".ui.accounts.WPComLoginActivity"
-            android:theme="@style/WordPress.Dialog">
-        </activity>
-        <activity
             android:name=".ui.AddQuickPressShortcutActivity"
             android:label="QuickPress" >
             <intent-filter>
@@ -245,8 +254,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".ui.DashboardActivity" />
         <activity
             android:name=".ui.ViewSiteActivity"
             android:theme="@style/WordPress.DrawerActivity" />
@@ -299,6 +306,12 @@
 
         <service android:name=".ui.reader.services.ReaderUpdateService"
             android:label="Reader Update Service"
+            android:exported="false"/>
+        <service android:name=".ui.reader.services.ReaderPostService"
+            android:label="Reader Post Service"
+            android:exported="false"/>
+        <service android:name=".ui.reader.services.ReaderCommentService"
+            android:label="Reader Comment Service"
             android:exported="false"/>
 
         <service android:name="org.wordpress.android.GCMIntentService"/>

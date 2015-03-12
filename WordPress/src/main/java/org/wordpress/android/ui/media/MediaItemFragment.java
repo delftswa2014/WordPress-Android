@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.database.Cursor;
@@ -28,6 +29,7 @@ import com.android.volley.toolbox.NetworkImageView;
 
 import org.wordpress.android.R;
 import org.wordpress.android.WordPress;
+import org.wordpress.android.WordPressDB;
 import org.wordpress.android.models.Blog;
 import org.wordpress.android.util.ImageUtils.BitmapWorkerCallback;
 import org.wordpress.android.util.ImageUtils.BitmapWorkerTask;
@@ -160,17 +162,15 @@ public class MediaItemFragment extends Fragment {
             return;
 
         // check whether or not to show the edit button
-        String state = cursor.getString(cursor.getColumnIndex("uploadState"));
+        String state = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_UPLOAD_STATE));
         mIsLocal = MediaUtils.isLocalFile(state);
         if (mIsLocal && getActivity() != null) {
             getActivity().invalidateOptionsMenu();
         }
 
-        // title
-        mTitleView.setText(cursor.getString(cursor.getColumnIndex("title")));
+        mTitleView.setText(cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_TITLE)));
 
-        // caption
-        String caption = cursor.getString(cursor.getColumnIndex("caption"));
+        String caption = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_CAPTION));
         if (caption == null || caption.length() == 0) {
             mCaptionView.setVisibility(View.GONE);
         } else {
@@ -178,8 +178,7 @@ public class MediaItemFragment extends Fragment {
             mCaptionView.setVisibility(View.VISIBLE);
         }
 
-        // description
-        String desc = cursor.getString(cursor.getColumnIndex("description"));
+        String desc = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_DESCRIPTION));
         if (desc == null || desc.length() == 0) {
             mDescriptionView.setVisibility(View.GONE);
         } else {
@@ -187,43 +186,42 @@ public class MediaItemFragment extends Fragment {
             mDescriptionView.setVisibility(View.VISIBLE);
         }
 
-        // added / upload date
-        String date = MediaUtils.getDate(cursor.getLong(cursor.getColumnIndex("date_created_gmt")));
+        String date = MediaUtils.getDate(cursor.getLong(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_DATE_CREATED_GMT)));
         if (mIsLocal) {
-            mDateView.setText("Added on: " + date);
+            mDateView.setText(getResources().getString(R.string.media_details_added_on) + " " + date);
         } else {
-            mDateView.setText("Uploaded on: " + date);
+            mDateView.setText(getResources().getString(R.string.media_details_uploaded_on) + " " + date);
         }
 
-        // file name
-        String fileName = cursor.getString(cursor.getColumnIndex("fileName"));
-        mFileNameView.setText("File name: " + fileName);
+        String fileName = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_FILE_NAME));
+        mFileNameView.setText(getResources().getString(R.string.media_details_file_name) + " " + fileName);
 
         // get the file extension from the fileURL
-        String fileURL = cursor.getString(cursor.getColumnIndex("fileURL"));
+        String fileURL = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_FILE_URL));
         if (fileURL != null) {
             String fileType = fileURL.replaceAll(".*\\.(\\w+)$", "$1").toUpperCase();
-            mFileTypeView.setText("File type: " + fileType);
+            mFileTypeView.setText(getResources().getString(R.string.media_details_file_type) +
+                    " " +  fileType);
             mFileTypeView.setVisibility(View.VISIBLE);
 
             // set the file URL
-            mFileUrlView.setText("File URL: " + fileURL);
+            mFileUrlView.setText(getResources().getString(R.string.media_details_file_url) + " " + fileURL);
             mFileUrlView.setVisibility(View.VISIBLE);
         } else {
             mFileTypeView.setVisibility(View.GONE);
             mFileUrlView.setVisibility(View.GONE);
         }
 
-        String imageUri = cursor.getString(cursor.getColumnIndex("fileURL"));
+        String imageUri = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_FILE_URL));
         if (imageUri == null)
-            imageUri = cursor.getString(cursor.getColumnIndex("filePath"));
+            imageUri = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_FILE_PATH));
 
         inflateImageView();
 
         // image and dimensions
         if (MediaUtils.isValidImage(imageUri)) {
-            int width = cursor.getInt(cursor.getColumnIndex("width"));
-            int height = cursor.getInt(cursor.getColumnIndex("height"));
+            int width = cursor.getInt(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_WIDTH));
+            int height = cursor.getInt(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_HEIGHT));
 
             float screenWidth;
 
@@ -239,7 +237,8 @@ public class MediaItemFragment extends Fragment {
 
             if (width > 0 && height > 0) {
                 String dimensions = width + "x" + height;
-                mDimensionsView.setText("Dimensions: " + dimensions);
+                mDimensionsView.setText(getResources().getString(R.string.media_details_dimensions) +
+                        " " + dimensions);
                 mDimensionsView.setVisibility(View.VISIBLE);
             } else {
                 mDimensionsView.setVisibility(View.GONE);
@@ -254,7 +253,7 @@ public class MediaItemFragment extends Fragment {
             }
 
             if (mIsLocal) {
-                final String filePath = cursor.getString(cursor.getColumnIndex("filePath"));
+                final String filePath = cursor.getString(cursor.getColumnIndex(WordPressDB.COLUMN_NAME_FILE_PATH));
                 loadLocalImage(mImageView, filePath, width, height);
             } else {
                 // Allow non-private wp.com and Jetpack blogs to use photon to get a higher res thumbnail

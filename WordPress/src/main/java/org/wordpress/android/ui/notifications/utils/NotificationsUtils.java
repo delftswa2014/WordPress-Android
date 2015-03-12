@@ -52,7 +52,7 @@ public class NotificationsUtils {
 
     public static void getPushNotificationSettings(Context context, RestRequest.Listener listener,
                                                    RestRequest.ErrorListener errorListener) {
-        if (!WordPress.hasValidWPComCredentials(context)) {
+        if (!WordPress.hasDotComToken(context)) {
             return;
         }
 
@@ -72,7 +72,7 @@ public class NotificationsUtils {
     }
 
     public static void setPushNotificationSettings(Context context) {
-        if (!WordPress.hasValidWPComCredentials(context)) {
+        if (!WordPress.hasDotComToken(context)) {
             return;
         }
 
@@ -244,7 +244,8 @@ public class NotificationsUtils {
                     continue;
                 }
 
-                NoteBlockClickableSpan clickableSpan = new NoteBlockClickableSpan(rangeObject, shouldLink) {
+                NoteBlockClickableSpan clickableSpan = new NoteBlockClickableSpan(WordPress.getContext(), rangeObject,
+                        shouldLink) {
                     @Override
                     public void onClick(View widget) {
                         if (onNoteBlockTextClickListener != null) {
@@ -368,7 +369,7 @@ public class NotificationsUtils {
 
         boolean shouldLink = onNoteBlockTextClickListener != null;
 
-        NoteBlockClickableSpan clickableSpan = new NoteBlockClickableSpan(idBlock, shouldLink) {
+        NoteBlockClickableSpan clickableSpan = new NoteBlockClickableSpan(WordPress.getContext(), idBlock, shouldLink) {
             @Override
             public void onClick(View widget) {
                 if (onNoteBlockTextClickListener != null) {

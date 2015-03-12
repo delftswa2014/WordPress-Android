@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.SparseBooleanArray;
@@ -37,6 +36,7 @@ import org.wordpress.android.util.DisplayUtils;
 import org.wordpress.android.util.FormatUtils;
 import org.wordpress.android.util.NetworkUtils;
 import org.wordpress.android.util.ToastUtils;
+import org.wordpress.android.util.ptr.CustomSwipeRefreshLayout;
 import org.wordpress.android.util.ptr.SwipeToRefreshHelper;
 
 import java.lang.ref.WeakReference;
@@ -99,7 +99,7 @@ public class StatsSinglePostDetailsActivity extends ActionBarActivity
         }
 
         // pull to refresh setup
-        mSwipeToRefreshHelper = new SwipeToRefreshHelper(this, (SwipeRefreshLayout) findViewById(R.id.ptr_layout),
+        mSwipeToRefreshHelper = new SwipeToRefreshHelper(this, (CustomSwipeRefreshLayout) findViewById(R.id.ptr_layout),
                 new SwipeToRefreshHelper.RefreshListener() {
                     @Override
                     public void onRefreshStarted() {
@@ -342,6 +342,9 @@ public class StatsSinglePostDetailsActivity extends ActionBarActivity
         mGraphView.addSeries(mCurrentSeriesOnScreen);
         //mGraphView.getGraphViewStyle().setNumHorizontalLabels(getNumOfHorizontalLabels(dataToShowOnGraph.length));
         mGraphView.getGraphViewStyle().setNumHorizontalLabels(dataToShowOnGraph.length);
+        mGraphView.getGraphViewStyle().setMaxColumnWidth(
+                DisplayUtils.dpToPx(this, StatsConstants.STATS_GRAPH_BAR_MAX_COLUMN_WIDTH_DP)
+        );
         mGraphView.setHorizontalLabels(horLabels);
         mGraphView.setGestureListener(this);
         mSelectedBarGraphIndex = (mSelectedBarGraphIndex != -1) ? mSelectedBarGraphIndex : dataToShowOnGraph.length - 1;

@@ -1,6 +1,7 @@
 package org.wordpress.android.ui.notifications.blocks;
 
 import android.content.Context;
+import android.text.Html;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
@@ -54,7 +55,7 @@ public class CommentUserNoteBlock extends UserNoteBlock {
     public View configureView(View view) {
         final CommentUserNoteBlockHolder noteBlockHolder = (CommentUserNoteBlockHolder)view.getTag();
 
-        noteBlockHolder.nameTextView.setText(getNoteText().toString());
+        noteBlockHolder.nameTextView.setText(Html.fromHtml("<strong>" + getNoteText().toString() + "</strong>"));
         noteBlockHolder.agoTextView.setText(DateTimeUtils.timestampToTimeSpan(getTimestamp()));
         if (!TextUtils.isEmpty(getMetaHomeTitle()) || !TextUtils.isEmpty(getMetaSiteUrl())) {
             noteBlockHolder.bulletTextView.setVisibility(View.VISIBLE);
@@ -192,10 +193,10 @@ public class CommentUserNoteBlock extends UserNoteBlock {
     public void configureResources(Context context) {
         if (context == null) return;
 
-        mNormalTextColor = context.getResources().getColor(R.color.calypso_blue_dark);
+        mNormalTextColor = context.getResources().getColor(R.color.grey_dark);
         mNormalBackgroundColor = context.getResources().getColor(R.color.white);
-        mAgoTextColor = context.getResources().getColor(R.color.calypso_blue);
-        mUnapprovedTextColor = context.getResources().getColor(R.color.calypso_orange_dark);
+        mAgoTextColor = context.getResources().getColor(R.color.grey);
+        mUnapprovedTextColor = context.getResources().getColor(R.color.notification_status_unapproved_dark);
         // Double margin_extra_large for increased indent in comment replies
         mIndentedLeftPadding = context.getResources().getDimensionPixelSize(R.dimen.margin_extra_large) * 2;
     }

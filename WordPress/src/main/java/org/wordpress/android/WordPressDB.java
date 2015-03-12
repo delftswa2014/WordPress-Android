@@ -51,7 +51,28 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 
 public class WordPressDB {
-    private static final int DATABASE_VERSION = 28;
+    public static final String COLUMN_NAME_POST_ID               = "postID";
+    public static final String COLUMN_NAME_FILE_PATH             = "filePath";
+    public static final String COLUMN_NAME_FILE_NAME             = "fileName";
+    public static final String COLUMN_NAME_TITLE                 = "title";
+    public static final String COLUMN_NAME_DESCRIPTION           = "description";
+    public static final String COLUMN_NAME_CAPTION               = "caption";
+    public static final String COLUMN_NAME_HORIZONTAL_ALIGNMENT  = "horizontalAlignment";
+    public static final String COLUMN_NAME_WIDTH                 = "width";
+    public static final String COLUMN_NAME_HEIGHT                = "height";
+    public static final String COLUMN_NAME_MIME_TYPE             = "mimeType";
+    public static final String COLUMN_NAME_FEATURED              = "featured";
+    public static final String COLUMN_NAME_IS_VIDEO              = "isVideo";
+    public static final String COLUMN_NAME_IS_FEATURED_IN_POST   = "isFeaturedInPost";
+    public static final String COLUMN_NAME_FILE_URL              = "fileURL";
+    public static final String COLUMN_NAME_THUMBNAIL_URL         = "thumbnailURL";
+    public static final String COLUMN_NAME_MEDIA_ID              = "mediaId";
+    public static final String COLUMN_NAME_BLOG_ID               = "blogId";
+    public static final String COLUMN_NAME_DATE_CREATED_GMT      = "date_created_gmt";
+    public static final String COLUMN_NAME_VIDEO_PRESS_SHORTCODE = "videoPressShortcode";
+    public static final String COLUMN_NAME_UPLOAD_STATE          = "uploadState";
+
+    private static final int DATABASE_VERSION = 29;
 
     private static final String CREATE_TABLE_SETTINGS = "create table if not exists accounts (id integer primary key autoincrement, "
             + "url text, blogName text, username text, password text, imagePlacement text, centerThumbnail boolean, fullSizeImage boolean, maxImageWidth text, maxImageWidthId integer);";
@@ -253,7 +274,12 @@ public class WordPressDB {
                 // Add isUploading column to POSTS
                 db.execSQL(ADD_IS_UPLOADING);
                 currentVersion++;
+            case 28:
+                // Remove WordPress.com credentials
+                removeDotComCredentials();
+                currentVersion++;
         }
+
         db.setVersion(DATABASE_VERSION);
     }
 
@@ -266,17 +292,15 @@ public class WordPressDB {
     }
 
     private void migrateWPComAccount() {
-        Cursor c = db.query(SETTINGS_TABLE, new String[] { "username", "password" }, "dotcomFlag=1", null, null,
+        Cursor c = db.query(SETTINGS_TABLE, new String[] { "username" }, "dotcomFlag=1", null, null,
                 null, null);
 
         if (c.getCount() > 0) {
             c.moveToFirst();
             String username = c.getString(0);
-            String password = c.getString(1);
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this.context);
             SharedPreferences.Editor editor = settings.edit();
             editor.putString(WordPress.WPCOM_USERNAME_PREFERENCE, username);
-            editor.putString(WordPress.WPCOM_PASSWORD_PREFERENCE, password);
             editor.commit();
         }
 
@@ -336,7 +360,7 @@ public class WordPressDB {
         if (limit != 0) {
             limitStr = String.valueOf(limit);
         }
-        String[] baseFields = new String[]{"id", "blogName", "username", "blogId", "url", "password"};
+        String[] baseFields = new String[]{"id", "blogName", "username", "blogId", "url"};
         String[] allFields = baseFields;
         if (extraFields != null) {
             allFields = (String[]) ArrayUtils.addAll(baseFields, extraFields);
@@ -351,17 +375,17 @@ public class WordPressDB {
             String username = c.getString(2);
             int blogId = c.getInt(3);
             String url = c.getString(4);
-            String password = c.getString(5);
-            if (password != null && !password.equals("") && id > 0) {
+            if (id > 0) {
                 Map<String, Object> thisHash = new HashMap<String, Object>();
                 thisHash.put("id", id);
                 thisHash.put("blogName", blogName);
                 thisHash.put("username", username);
                 thisHash.put("blogId", blogId);
                 thisHash.put("url", url);
+                int extraFieldsIndex = baseFields.length;
                 if (extraFields != null) {
                     for (int j = 0; j < extraFields.length; ++j) {
-                        thisHash.put(extraFields[j], c.getString(6 + j));
+                        thisHash.put(extraFields[j], c.getString(extraFieldsIndex + j));
                     }
                 }
                 accounts.add(thisHash);
@@ -389,6 +413,28 @@ public class WordPressDB {
         return SqlUtils.intForQuery(db, "SELECT COUNT(*) FROM " + SETTINGS_TABLE + " WHERE dotcomFlag = 1", null);
     }
 
+    // Removes stored DotCom credentials. As of March 2015 only the OAuth token is used
+    private void removeDotComCredentials() {
+        // First clear out the password for all WP.com sites
+        ContentValues dotComValues = new ContentValues();
+        dotComValues.put("password", "");
+        db.update(SETTINGS_TABLE, dotComValues, "dotcomFlag=1", null);
+
+        // Next, we'll clear out the credentials stored for Jetpack sites
+        ContentValues jetPackValues = new ContentValues();
+        jetPackValues.put("dotcom_username", "");
+        jetPackValues.put("dotcom_password", "");
+        db.update(SETTINGS_TABLE, jetPackValues, null, null);
+
+        // Lastly we'll remove the preference that previously stored the WP.com password
+        if (this.context != null) {
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this.context);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.remove("wp_pref_wpcom_password");
+            editor.apply();
+        }
+    }
+
     public List<Map<String, Object>> getAllAccounts() {
         return getAccountsBy(null, null);
     }
@@ -396,7 +442,7 @@ public class WordPressDB {
     public int setAllDotComAccountsVisibility(boolean visible) {
         ContentValues values = new ContentValues();
         values.put("isHidden", !visible);
-        return db.update(SETTINGS_TABLE, values, "dotcomFlag = 1", null);
+        return db.update(SETTINGS_TABLE, values, "dotcomFlag=1", null);
     }
 
     public int setDotComAccountsVisibility(int id, boolean visible) {
@@ -1305,29 +1351,29 @@ public class WordPressDB {
 
     public void saveMediaFile(MediaFile mf) {
         ContentValues values = new ContentValues();
-        values.put("postID", mf.getPostID());
-        values.put("filePath", mf.getFilePath());
-        values.put("fileName", mf.getFileName());
-        values.put("title", mf.getTitle());
-        values.put("description", mf.getDescription());
-        values.put("caption", mf.getCaption());
-        values.put("horizontalAlignment", mf.getHorizontalAlignment());
-        values.put("width", mf.getWidth());
-        values.put("height", mf.getHeight());
-        values.put("mimeType", mf.getMimeType());
-        values.put("featured", mf.isFeatured());
-        values.put("isVideo", mf.isVideo());
-        values.put("isFeaturedInPost", mf.isFeaturedInPost());
-        values.put("fileURL", mf.getFileURL());
-        values.put("thumbnailURL", mf.getThumbnailURL());
-        values.put("mediaId", mf.getMediaId());
-        values.put("blogId", mf.getBlogId());
-        values.put("date_created_gmt", mf.getDateCreatedGMT());
-        values.put("videoPressShortcode", mf.getVideoPressShortCode());
+        values.put(COLUMN_NAME_POST_ID, mf.getPostID());
+        values.put(COLUMN_NAME_FILE_PATH, mf.getFilePath());
+        values.put(COLUMN_NAME_FILE_NAME, mf.getFileName());
+        values.put(COLUMN_NAME_TITLE, mf.getTitle());
+        values.put(COLUMN_NAME_DESCRIPTION, mf.getDescription());
+        values.put(COLUMN_NAME_CAPTION, mf.getCaption());
+        values.put(COLUMN_NAME_HORIZONTAL_ALIGNMENT, mf.getHorizontalAlignment());
+        values.put(COLUMN_NAME_WIDTH, mf.getWidth());
+        values.put(COLUMN_NAME_HEIGHT, mf.getHeight());
+        values.put(COLUMN_NAME_MIME_TYPE, mf.getMimeType());
+        values.put(COLUMN_NAME_FEATURED, mf.isFeatured());
+        values.put(COLUMN_NAME_IS_VIDEO, mf.isVideo());
+        values.put(COLUMN_NAME_IS_FEATURED_IN_POST, mf.isFeaturedInPost());
+        values.put(COLUMN_NAME_FILE_URL, mf.getFileURL());
+        values.put(COLUMN_NAME_THUMBNAIL_URL, mf.getThumbnailURL());
+        values.put(COLUMN_NAME_MEDIA_ID, mf.getMediaId());
+        values.put(COLUMN_NAME_BLOG_ID, mf.getBlogId());
+        values.put(COLUMN_NAME_DATE_CREATED_GMT, mf.getDateCreatedGMT());
+        values.put(COLUMN_NAME_VIDEO_PRESS_SHORTCODE, mf.getVideoPressShortCode());
         if (mf.getUploadState() != null)
-            values.put("uploadState", mf.getUploadState());
+            values.put(COLUMN_NAME_UPLOAD_STATE, mf.getUploadState());
         else
-            values.putNull("uploadState");
+            values.putNull(COLUMN_NAME_UPLOAD_STATE);
 
         synchronized (this) {
             int result = 0;

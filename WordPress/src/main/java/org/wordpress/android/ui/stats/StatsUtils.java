@@ -5,13 +5,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.android.volley.NetworkResponse;
 import com.android.volley.VolleyError;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.wordpress.android.R;
 import org.wordpress.android.WordPress;
-import org.wordpress.android.WordPressDB;
 import org.wordpress.android.models.Blog;
 import org.wordpress.android.ui.WPWebViewActivity;
 import org.wordpress.android.ui.reader.ReaderActivityLauncher;
@@ -214,7 +214,7 @@ public class StatsUtils {
      */
     public static long getDateDiff(Date date1, Date date2, TimeUnit timeUnit) {
         long diffInMillies = date2.getTime() - date1.getTime();
-        return timeUnit.convert(diffInMillies,TimeUnit.MILLISECONDS);
+        return timeUnit.convert(diffInMillies, TimeUnit.MILLISECONDS);
     }
 
     public static int getSmallestWidthDP() {
@@ -229,49 +229,25 @@ public class StatsUtils {
      * 3. Check that credentials are not empty before launching the activity
      *
      */
-    public static StatsCredentials getBlogStatsCredentials(int localTableBlogID) {
+    public static String getBlogStatsUsername(int localTableBlogID) {
         Blog currentBlog = WordPress.getBlog(localTableBlogID);
         if (currentBlog == null) {
             return null;
         }
         String statsAuthenticatedUser = currentBlog.getDotcom_username();
-        String statsAuthenticatedPassword = currentBlog.getDotcom_password();
 
-        if (org.apache.commons.lang.StringUtils.isEmpty(statsAuthenticatedPassword)
-                || org.apache.commons.lang.StringUtils.isEmpty(statsAuthenticatedUser)) {
+        if (org.apache.commons.lang.StringUtils.isEmpty(statsAuthenticatedUser)) {
             // Let's try the global wpcom credentials
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(WordPress.getContext());
             statsAuthenticatedUser = settings.getString(WordPress.WPCOM_USERNAME_PREFERENCE, null);
-            statsAuthenticatedPassword = WordPressDB.decryptPassword(
-                    settings.getString(WordPress.WPCOM_PASSWORD_PREFERENCE, null)
-            );
         }
 
-        if (org.apache.commons.lang.StringUtils.isEmpty(statsAuthenticatedPassword)
-                || org.apache.commons.lang.StringUtils.isEmpty(statsAuthenticatedUser)) {
+        if (org.apache.commons.lang.StringUtils.isEmpty(statsAuthenticatedUser)) {
             AppLog.e(AppLog.T.STATS, "WPCOM Credentials for the current blog are null!");
             return null;
         }
 
-        return new StatsCredentials(statsAuthenticatedUser, statsAuthenticatedPassword);
-    }
-
-    public static class StatsCredentials {
-        private final String mUsername;
-        private final String mPassword;
-
-        public StatsCredentials(String username, String password) {
-            this.mUsername = username;
-            this.mPassword = password;
-        }
-
-        public String getUsername() {
-            return mUsername;
-        }
-
-        public String getPassword() {
-            return mPassword;
-        }
+        return statsAuthenticatedUser;
     }
 
     /**
@@ -294,6 +270,20 @@ public class StatsUtils {
         }
     }
 
+    public static synchronized void logVolleyErrorDetails(final VolleyError volleyError) {
+        if (volleyError == null) {
+            AppLog.e(T.STATS, "Tried to log a VolleyError, but the error obj was null!");
+            return;
+        }
+        if (volleyError.networkResponse != null) {
+            NetworkResponse networkResponse = volleyError.networkResponse;
+            AppLog.e(T.STATS, "Network status code: " + networkResponse.statusCode);
+            if (networkResponse.data != null) {
+                AppLog.e(T.STATS, "Network data: " + new String(networkResponse.data));
+            }
+        }
+        AppLog.e(T.STATS, "Volley Error details: " + volleyError.getMessage(), volleyError);
+    }
 
     public static synchronized Serializable parseResponse(StatsService.StatsEndpointsEnum endpointName, String blogID, JSONObject response)
             throws JSONException {
